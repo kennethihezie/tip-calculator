@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,12 +38,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.tiptime.R
 import com.example.tiptime.ui.theme.TipTimeTheme
 import com.example.tiptime.utils.Utils
 import com.example.tiptime.view.components.EditNumberField
+import com.example.tiptime.view.components.RoundTheTipRow
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,13 +69,28 @@ fun TipTimeLayout() {
     var amountInput by remember {
         mutableStateOf("")
     }
+    var tipInput by remember {
+        mutableStateOf("")
+    }
+    var roundUp by remember {
+        mutableStateOf(false)
+    }
     val amount = amountInput.toDoubleOrNull() ?: 0.0
-    val tip = Utils.calculateTip(amount)
+    val tipPercent = tipInput.toDoubleOrNull() ?: 0.0
 
+    val tip = Utils.calculateTip(amount, tipPercent = tipPercent, roundUp = roundUp)
+
+    /*
+     .verticalScroll(rememberScrollState()) to the modifier to enable the column
+     to scroll vertically. The rememberScrollState() creates and automatically
+     remembers the scroll state
+     */
     Column(
-        modifier = Modifier.padding(40.dp),
+        modifier = Modifier
+            .padding(40.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = stringResource(R.string.calculate_tip),
@@ -80,16 +99,16 @@ fun TipTimeLayout() {
                 .align(alignment = Alignment.Start)
         )
 
-        EditNumberField(value = amountInput, onValueChange = { amountInput = it }, modifier = Modifier.padding(bottom = 32.dp).fillMaxWidth())
+        EditNumberField(label = R.string.bill_amount, imeAction = ImeAction.Next, leadingIcon = R.drawable.money, value = amountInput, onValueChange = { amountInput = it }, modifier = Modifier
+            .padding(bottom = 32.dp)
+            .fillMaxWidth())
 
-        /*
-        Positional formatting is used to display dynamic content in strings.
-        For example, imagine that you want the Tip amount text box to display
-        an xx.xx value that could be any amount calculated and formatted in
-        your function. To accomplish this in the strings.xml file, you need to
-        define the string resource with a placeholder argument, like this code
-        snippet:
-         */
+        EditNumberField(label = R.string.how_was_the_service, imeAction = ImeAction.Done, leadingIcon = R.drawable.percent, value = tipInput, onValueChange = { tipInput = it }, modifier = Modifier
+            .padding(bottom = 32.dp)
+            .fillMaxWidth())
+
+        RoundTheTipRow(modifier = Modifier, checked = roundUp, onCheckedChange = { roundUp = it}, label = R.string.round_up_tip)
+
         Text(
             text = stringResource(R.string.tip_amount, tip),
             style = MaterialTheme.typography.displaySmall
@@ -98,6 +117,8 @@ fun TipTimeLayout() {
         Spacer(modifier = Modifier.height(150.dp))
     }
 }
+
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
